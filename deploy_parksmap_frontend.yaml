@@ -1,0 +1,52 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: deploy-parksmap
+  namespace: gpo-ns-app 
+spec:
+  params:
+    - name: APP_NAME
+      description: "The name of the Spring Boot app to deploy"
+      type: string
+      default: "parksmap"
+    - name: IMAGE
+      description: "The image URL of the app to deploy"
+      type: string
+      default: "quay.io/openshiftroadshow/parksmap:latest"
+    - name: NAMESPACE
+      description: "OpenShift namespace to deploy the app"
+      type: string
+      default: "default"
+  steps:
+    - name: deploy-app
+      image: quay.io/openshift/origin-cli:latest  # Use OpenShift CLI image for deployment
+      script: |
+        #!/bin/bash
+        set -e
+
+        # Define label key-value pairs
+        LABELS="app=rws,component=parksmap,role=frontend"
+
+        # Deploy the Spring Boot app using the provided image
+        echo "Deploying ${params.APP_NAME} with image ${params.IMAGE} in namespace ${params.NAMESPACE}"
+
+        # Create a deployment
+        oc new-app ${params.IMAGE} --name=${params.APP_NAME} --namespace=${params.NAMESPACE}
+
+        # Apply labels to the deployment
+        oc label dc/${params.APP_NAME} ${LABELS} --namespace=${params.NAMESPACE}
+
+        # Expose the deployment as a service
+        oc expose dc/${params.APP_NAME} --port=8080 --name=${params.APP_NAME}-svc --namespace=${params.NAMESPACE}
+
+        # Apply labels to the service
+        oc label svc/${params.APP_NAME}-svc ${LABELS} --namespace=${params.NAMESPACE}
+
+        # Create a route to expose the service to external traffic
+        oc expose svc/${params.APP_NAME}-svc --namespace=${params.NAMESPACE}
+
+        # Apply labels to the route
+        oc label route/${params.APP_NAME} ${LABELS} --namespace=${params.NAMESPACE}
+        
+        echo "Deployment successful. App is now accessible via the route."
+
