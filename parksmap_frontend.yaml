@@ -1,0 +1,25 @@
+#!/bin/bash
+
+# Set default values for variables
+APP_NAME="${APP_NAME:-parksmap}"
+IMAGE="${IMAGE:-quay.io/openshiftroadshow/parksmap:latest}"
+NAMESPACE="${NAMESPACE:-gpo-ns-app}"
+
+# Ensure the required variables are set
+if [[ -z "$APP_NAME" || -z "$IMAGE" || -z "$NAMESPACE" ]]; then
+  echo "Error: APP_NAME, IMAGE, and NAMESPACE must be defined"
+  exit 1
+fi
+
+
+# Create a new OpenShift deployment for the app
+echo "Deploying $APP_NAME with image $IMAGE in namespace $NAMESPACE..."
+oc new-app "$IMAGE" --name="$APP_NAME" -n "$NAMESPACE"
+
+# Expose the app (if needed)
+echo "Exposing $APP_NAME..."
+oc expose dc "$APP_NAME" --port=8080 -n "$NAMESPACE"
+
+# Show the deployed app
+echo "App $APP_NAME is now deployed at:"
+oc get routes -n "$NAMESPACE" | grep "$APP_NAME"
