@@ -1,8 +1,28 @@
 apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: deploy-parksmap-pipeline
+  namespace: <your-namespace>  # Replace with your actual namespace
+spec:
+  params: []
+  workspaces: []
+  tasks:
+    - name: deploy-parksmap-task
+      taskRef:
+        name: deploy-parksmap
+      params:
+        - name: APP_NAME
+          value: "parksmap"
+        - name: IMAGE
+          value: "quay.io/openshiftroadshow/parksmap:latest"
+        - name: NAMESPACE
+          value: "default"
+---
+apiVersion: tekton.dev/v1beta1
 kind: Task
 metadata:
   name: deploy-parksmap
-  namespace: gpo-ns-app 
+  namespace: <your-namespace>  # Replace with your actual namespace
 spec:
   params:
     - name: APP_NAME
