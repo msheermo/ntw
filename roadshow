@@ -1,0 +1,7 @@
+oc new-project roadshow
+oc policy add-role-to-user view system:serviceaccount:roadshow:default
+
+oc start-build nationalpark
+
+
+oc create -f https://raw.githubusercontent.com/openshift-labs/starter-guides/ocp-4.6/mongodb-template.yaml

@@ -19,12 +19,10 @@ spec:
           value: |
             #!/bin/bash
             # Login to OpenShift if needed (ensure the correct credentials are set)
-            echo "Deploying application ${app-name}"
             oc project gpo-ns-app && oc new-app --image=quay.io/openshiftroadshow/parksmap:latest --name=parksmap -l app=rws-demo,component=parksmap,role=frontend
 
             # Expose the service
-            echo "Exposing service parksmap
-            oc expose svc/parksmap --port=8080
+            oc expose svc parksmap --port=8080
         - name: VERSION
           value: latest
   finally: []
