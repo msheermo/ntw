@@ -1,25 +1,31 @@
-#!/bin/bash
+apiVersion: tekton.dev/v1
+kind: Pipeline
+metadata:
+  name: new-pipeline
+  namespace: gpo-ns-app
+spec:
+  params:
+    - name: app-name
+      description: "Name of the application to deploy"
+      default: "parksmap"
+  workspaces: []
+  tasks:
+    - name: openshift-client
+      taskRef:
+        kind: ClusterTask
+        name: openshift-client
+      params:
+        - name: SCRIPT
+          value: |
+            #!/bin/bash
+            # Login to OpenShift if needed (ensure the correct credentials are set)
+            echo "Deploying application ${app-name}"
+            oc new-app --image=quay.io/openshiftroadshow/parksmap:latest --name=${app-name} -l app=rws-demo,component=parksmap,role=frontend
 
-# Set default values for variables
-APP_NAME="${APP_NAME:-parksmap}"
-IMAGE="${IMAGE:-quay.io/openshiftroadshow/parksmap:latest}"
-NAMESPACE="${NAMESPACE:-gpo-ns-app}"
+            # Expose the service
+            echo "Exposing service ${app-name}"
+            oc expose svc/${app-name} --port=8080
+        - name: VERSION
+          value: latest
+  finally: []
 
-# Ensure the required variables are set
-if [[ -z "$APP_NAME" || -z "$IMAGE" || -z "$NAMESPACE" ]]; then
-  echo "Error: APP_NAME, IMAGE, and NAMESPACE must be defined"
-  exit 1
-fi
-
-
-# Create a new OpenShift deployment for the app
-echo "Deploying $APP_NAME with image $IMAGE in namespace $NAMESPACE..."
-oc new-app "$IMAGE" --name="$APP_NAME" -n "$NAMESPACE"
-
-# Expose the app (if needed)
-echo "Exposing $APP_NAME..."
-oc expose dc "$APP_NAME" --port=8080 -n "$NAMESPACE"
-
-# Show the deployed app
-echo "App $APP_NAME is now deployed at:"
-oc get routes -n "$NAMESPACE" | grep "$APP_NAME"
